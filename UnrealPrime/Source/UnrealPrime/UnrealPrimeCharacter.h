@@ -80,6 +80,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	uint32 bUsingMotionControllers : 1;
 
+	UPROPERTY(EditAnywhere)
+	float SkillRadius = 500.0f;
+
+	UPROPERTY(EditAnywhere)
+	USoundBase* SkillSound;
+
 protected:
 	
 	/** Fires a projectile. */
@@ -105,6 +111,8 @@ protected:
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	 */
 	void LookUpAtRate(float Rate);
+
+	void OnSkill();
 
 	struct TouchData
 	{

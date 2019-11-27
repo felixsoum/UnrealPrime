@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "MotionControllerComponent.h"
 #include "XRMotionControllerBase.h" // for FXRMotionControllerBase::RightHandSourceId
+#include "Cubemon.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
@@ -136,6 +137,8 @@ void AUnrealPrimeCharacter::SetupPlayerInputComponent(class UInputComponent* Pla
 	PlayerInputComponent->BindAxis("TurnRate", this, &AUnrealPrimeCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AUnrealPrimeCharacter::LookUpAtRate);
+
+	PlayerInputComponent->BindAction("Skill", IE_Pressed, this, &AUnrealPrimeCharacter::OnSkill);
 }
 
 void AUnrealPrimeCharacter::OnFire()
@@ -284,6 +287,32 @@ void AUnrealPrimeCharacter::LookUpAtRate(float Rate)
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
+void AUnrealPrimeCharacter::OnSkill()
+{
+	if (SkillSound != nullptr)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, SkillSound, GetActorLocation());
+	}
+
+	TArray<TEnumAsByte<EObjectTypeQuery>> query;
+	TArray<AActor*> ignore;
+	TArray<AActor*> out;
+	UKismetSystemLibrary::SphereOverlapActors(this, GetActorLocation(), SkillRadius, query, ACubemon::StaticClass(), ignore, out);
+
+	FString result = FString::Printf(TEXT("Hit %d actors."), out.Num());
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, result);
+
+	for (auto actor : out)
+	{
+		auto cubemon = Cast<ACubemon>(actor);
+
+		if (cubemon != nullptr)
+		{
+			cubemon->HP -= 10;
+		}
+	}
+}
+
 bool AUnrealPrimeCharacter::EnableTouchscreenMovement(class UInputComponent* PlayerInputComponent)
 {
 	if (FPlatformMisc::SupportsTouchInput() || GetDefault<UInputSettings>()->bUseMouseForTouch)
@@ -295,6 +324,6 @@ bool AUnrealPrimeCharacter::EnableTouchscreenMovement(class UInputComponent* Pla
 		//PlayerInputComponent->BindTouch(EInputEvent::IE_Repeat, this, &AUnrealPrimeCharacter::TouchUpdate);
 		return true;
 	}
-	
+
 	return false;
 }
